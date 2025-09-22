@@ -260,13 +260,13 @@ button {
 /* Larger month dropdown */
 select {
   padding: 12px 20px;
-  font-size: 1.1rem;
+  font-size: 1.8rem;
   border-radius: 10px;
 }
 
 /* Larger CSV file selector */
 input[type="file"] {
-  font-size: 1.1rem;
+  font-size: 1.8rem;
   padding: 12px;
   border-radius: 10px;
 }
