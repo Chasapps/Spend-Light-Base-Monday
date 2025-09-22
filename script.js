@@ -159,13 +159,25 @@ function matchesKeyword(descLower, keywordLower){
   return true;
 }
 
-function categorise(txns, rules){
-  for (const t of txns){
-    const descLower = (t.description||'').toLowerCase();
+function categorise(txns, rules) {
+  for (const t of txns) {
+    const descLower = (t.description || '').toLowerCase();
+    const amount = Math.abs(Number(t.amount)); // adjust field name if different
     let matched = 'UNCATEGORISED';
-    for (const r of rules){
-      if (matchesKeyword(descLower, r.keyword)) { matched = r.category; break; }
+
+    // ✅ Special case: Petrol transactions ≤ $2 go to Coffee
+    if (descLower.includes('petrol') && amount <= 2) {
+      matched = 'COFFEE';
+    } else {
+      // Otherwise, check the normal rules
+      for (const r of rules) {
+        if (matchesKeyword(descLower, r.keyword)) {
+          matched = r.category;
+          break;
+        }
+      }
     }
+
     t.category = matched;
   }
   return txns;
