@@ -266,7 +266,7 @@ select {
 
 /* Larger CSV file selector */
 input[type="file"] {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   padding: 12px;
   border-radius: 16px;
 }
@@ -275,4 +275,19 @@ input[type="file"] {
 .app-controls .btn-row,
 .app-controls .filters {
   gap: 12px;
+}
+/* Make only the clickable "Choose File" button bigger */
+input[type="file"]::file-selector-button {
+  padding: 12px 18px;     /* Button padding */
+  font-size: 1.8rem;      /* Text size of the button */
+  border-radius: 16px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+/* Optional: hover effect for better feedback */
+input[type="file"]::file-selector-button:hover {
+  background: var(--primary-2);
 }
