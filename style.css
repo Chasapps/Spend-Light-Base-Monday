@@ -245,3 +245,34 @@ details#rulesDetails summary { cursor: pointer; }
 #categoryTotals table.cats th:first-child,
 #categoryTotals table.cats td:first-child { text-align: left !important; }
 #categoryTotals .num { text-align: right !important; }
+/* === Bigger Buttons, Dropdown, and File Inputs === */
+.app-controls {
+  font-size: 1.2rem;   /* scales everything inside */
+}
+
+/* Enlarge all buttons */
+button {
+  padding: 16px 24px;
+  font-size: 1.2rem;
+  border-radius: 12px;
+}
+
+/* Larger month dropdown */
+select {
+  padding: 12px 20px;
+  font-size: 1.1rem;
+  border-radius: 10px;
+}
+
+/* Larger CSV file selector */
+input[type="file"] {
+  font-size: 1.1rem;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+/* Extra spacing for grouped controls */
+.app-controls .btn-row,
+.app-controls .filters {
+  gap: 12px;
+}
