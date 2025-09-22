@@ -525,13 +525,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 const SAMPLE_RULES = `# Rules format: KEYWORD => CATEGORY
-OFFICEWORKS => OFFICE SUPPLIES
-COLES => GROCERIES
-SHELL => PETROL
-UBER => TRANSPORT
-WOOLWORTHS => GROCERIES
-BP => PETROL
-BUNNINGS => HARDWARE
 `;
 
 // --- Transactions collapse logic ---
