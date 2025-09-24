@@ -158,24 +158,29 @@ function matchesKeyword(descLower, keywordLower){
   }
   return 
 
-  function categorise(txns, rules) {
+function categorise(txns, rules) {
   for (const t of txns) {
-    const descLower = (t.description || '').toLowerCase();
-    const amount = Math.abs(Number(t.amount)); // adjust field name if different
-    let matched = 'UNCATEGORISED';
+    const descLower = String(t.desc || t.description || "").toLowerCase();
+    const amount = Math.abs(Number(t.amount || t.debit || 0));
 
-    // ✅ Special case: Petrol transactions ≤ $2 go to Coffee
-    if (descLower.includes('petrol') && amount <= 2) {
-      matched = 'COFFEE';
-    } else {
-      // Otherwise, check the normal rules
-      for (const r of rules) {
-        if (matchesKeyword(descLower, r.keyword)) {
-          matched = r.category;
-          break;
-        }
+    // 1) normal rule match
+    let matched = null;
+    for (const r of rules) {
+      if (matchesKeyword(descLower, r.keyword)) {
+        matched = r.category;
+        break;
       }
     }
+
+    // 2) special case: tiny purchases at petrol stations → Coffee
+    //    (do it based on the *resulting category*, not the description text)
+    if (matched && String(matched).toUpperCase() === "PETROL" && amount <= 2) {
+      matched = "COFFEE";
+    }
+
+    t.category = matched || "UNCATEGORISED";
+  }
+}
 
 
 function computeCategoryTotals(txns) {
