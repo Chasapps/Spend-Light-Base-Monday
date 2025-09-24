@@ -156,10 +156,9 @@ function matchesKeyword(descLower, keywordLower){
     if (i === -1) return false;
     pos = i + p.length;
   }
-  return true;
-}
+  return 
 
-function categorise(txns, rules) {
+  function categorise(txns, rules) {
   for (const t of txns) {
     const descLower = (t.description || '').toLowerCase();
     const amount = Math.abs(Number(t.amount)); // adjust field name if different
@@ -178,10 +177,6 @@ function categorise(txns, rules) {
       }
     }
 
-    t.category = matched;
-  }
-  return txns;
-}
 
 function computeCategoryTotals(txns) {
   const byCat = new Map();
