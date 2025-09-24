@@ -156,7 +156,7 @@ function matchesKeyword(descLower, keywordLower){
     if (i === -1) return false;
     pos = i + p.length;
   }
-  return 
+  return true;
 
 function categorise(txns, rules) {
   for (const t of txns) {
