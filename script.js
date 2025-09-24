@@ -236,9 +236,7 @@ function renderMonthTotals() {
     const label = friendlyMonthOrAll(MONTH_FILTER);
     const cat = CURRENT_FILTER ? ` + category \"${CURRENT_FILTER}\"` : "";
     el.innerHTML = `Showing <span class="badge">${count}</span> transactions for <strong>${friendlyMonthOrAll(MONTH_FILTER)}${cat}</strong> · ` +
-                   `Debit: <strong>$${debit.toFixed(2)}</strong> · ` +
-                   `Credit: <strong>$${credit.toFixed(2)}</strong> · ` +
-                   `Net: <strong>$${net.toFixed(2)}</strong>`;
+                   `Debit: <strong>$${debit.toFixed(2)}</strong> · `;
   }
 }
 
