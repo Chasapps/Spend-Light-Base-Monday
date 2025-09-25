@@ -1,3 +1,5 @@
+Check code :
+
 // SpendLite v6.6.27 – Month filter + export respects selected month
 // Keeps: UCASE categories, jolly theme, import/export rules, category filter, VISA- keyword, tabs export + grand total
 
