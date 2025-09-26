@@ -53,6 +53,9 @@ function parseAmount(s) {
 // ---- robust loader (works with <10-col CSVs and debit-only)
 
 function loadCsvText(csvText) {
+ 
+  
+  console.log('rows:', rows.length, 'txns:', txns.length, rows[0], rows[1]);
   const rows = Papa.parse(csvText.trim(), { skipEmptyLines: true }).data;
 
   // header detection: if the first row's DEBIT isn't numeric, start at next row
