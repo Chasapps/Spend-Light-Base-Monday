@@ -256,29 +256,7 @@ function applyRulesAndRender({keepPage = false} = {}) { if (!keepPage) CURRENT_P
   renderCategoryTotals(txns);
   renderTransactionsTable(txns);
   saveTxnsToLocalStorage();
-  try { updateMonthBanner(); } catch {}
-                                                      }
-
-function exportTotalsold() {
-  const txns = monthFilteredTxns();
-  const { rows, grand } = computeCategoryTotals(txns);
-  // Always use a friendly label like "August 2025" for both header and filename
-  const labelFriendly = friendlyMonthOrAll(MONTH_FILTER || getFirstTxnMonth(txns) || new Date().toISOString().slice(0,10));
-  const header = `SpendLite Category Totals (${labelFriendly})`;
-  const lines = [header, '='.repeat(header.length)];
-  lines.push("Category\tAmount\t%");
-  for (const [cat, total] of rows) {
-    const pct = grand !== 0 ? (total / grand * 100) : 0;
-    lines.push(`${cat}\t${total.toFixed(2)}\t${pct.toFixed(1)}%`);
-  }
-  lines.push('', `TOTAL\t${grand.toFixed(2)}\t100%`);
-  const blob = new Blob([lines.join('\\n')], {type: 'text/plain'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `category_totals_${forFilename(labelFriendly)}.txt`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  try {  updateMonthBanner(); } catch {}
 }
 function exportTotals() {
   const txns = monthFilteredTxns();
