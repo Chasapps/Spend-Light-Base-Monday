@@ -67,17 +67,18 @@ function loadCsvText(csvText) {
 
       // fallbacks for short CSVs
       const effectiveDate = (r[COL.DATE] ?? r[0] ?? '').trim();
-      const amountRaw =
-        parseAmount(r[COL.DEBIT] ?? r[1] ?? r.find(c => Number.isFinite(parseAmount(c)))) || 0;
+      const firstNumericCell = r.find(c => Number.isFinite(parseAmount(c)));
+      const amountRaw = parseAmount(r[COL.DEBIT] ?? r[1] ?? firstNumericCell) || 0;
       const longDesc = String(r[COL.LONGDESC] ?? r[3] ?? r[r.length - 1] ?? '').trim();
 
-      // keep any non-zero amount (deb/cred both ok)
+      // keep any non-zero amount
       if (!Number.isFinite(amountRaw) || amountRaw === 0) continue;
 
       txns.push({ date: effectiveDate, amount: amountRaw, description: longDesc });
     }
-      alert("rows=" + rows.length + " txns=" + txns.length);
-  
+
+    // quick mobile debug
+    alert('Parsed rows: ' + rows.length + ' | txns: ' + txns.length);
 
     CURRENT_TXNS = txns;
     saveTxnsToLocalStorage();
@@ -86,9 +87,12 @@ function loadCsvText(csvText) {
     applyRulesAndRender();
     return txns;
   } catch (err) {
-    alert('loadCsvText failed:', err);
-    alert('Could not read that CSV. Open console for details.');
-    
+    alert('loadCsvText failed: ' + (err && err.message ? err.message : String(err)));
+    return [];
+  }
+}
+
+
 
 
 // --- Date helpers
