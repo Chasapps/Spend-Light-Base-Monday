@@ -28,9 +28,13 @@ function forFilename(label) {
   return String(label).replace(/\s+/g, '_');
 }
 
-
-const LS_KEYS = { RULES: 'spendlite_rules_v6626', FILTER: 'spendlite_filter_v6626', MONTH: 'spendlite_month_v6627', TXNS_COLLAPSED: 'spendlite_txns_collapsed_v7' };
-
+const LS_KEYS = {
+  RULES: 'spendlite_rules_v6626',
+  FILTER: 'spendlite_filter_v6626',
+  MONTH: 'spendlite_month_v6627',
+  TXNS_COLLAPSED: 'spendlite_txns_collapsed_v7',
+  TXNS_JSON: 'spendlite_txns_json_v7'
+};
 function toTitleCase(str) {
   if (!str) return '';
   return String(str)
@@ -46,27 +50,45 @@ function parseAmount(s) {
   s = String(s).replace(/[^\d\-,.]/g, '').replace(/,/g, '');
   return Number(s) || 0;
 }
-
+// ---- robust loader (works with <10-col CSVs and debit-only)
 function loadCsvText(csvText) {
   const rows = Papa.parse(csvText.trim(), { skipEmptyLines: true }).data;
+
+  // detect header by testing the DEBIT column of the first row
   const startIdx = rows.length && isNaN(parseAmount(rows[0][COL.DEBIT])) ? 1 : 0;
+
+  const neededCols = [COL.DATE, COL.DEBIT, COL.LONGDESC];
+  const minCols = Math.max(...neededCols) + 1;
+
   const txns = [];
   for (let i = startIdx; i < rows.length; i++) {
     const r = rows[i];
-    if (!r || r.length < 10) continue;
-    const effectiveDate = r[COL.DATE] || '';
-    const debit = parseAmount(r[COL.DEBIT]);
-    const longDesc = (r[COL.LONGDESC] || '').trim();
-    if ( (effectiveDate || longDesc) && Number.isFinite(debit) && debit !== 0 ) {
-       txns.push({ date: effectiveDate, amount: debit, description: longDesc });
+    if (!r || r.length < minCols) {
+      // optional: help diagnose when columns are fewer than expected
+      // console.debug('Skipping row (too few cols):', r);
+      continue;
     }
+    const effectiveDate = r[COL.DATE] || '';
+    const raw = parseAmount(r[COL.DEBIT]);       // debit column only
+    const longDesc = (r[COL.LONGDESC] || '').trim();
+
+    // require some content + a numeric, non-zero amount
+    if (!Number.isFinite(raw) || raw === 0) continue;
+
+    // debit-only: treat positive as spend; ignore negatives (credits/refunds)
+    if (raw < 0) continue;
+
+    txns.push({ date: effectiveDate, amount: raw, description: longDesc });
   }
-  CURRENT_TXNS = txns; saveTxnsToLocalStorage();
+
+  CURRENT_TXNS = txns;
+  saveTxnsToLocalStorage();
   try { updateMonthBanner(); } catch {}
   rebuildMonthDropdown();
   applyRulesAndRender();
   return txns;
 }
+
 
 // --- Date helpers
 function parseDateSmart(s) {
@@ -161,27 +183,18 @@ function matchesKeyword(descLower, keywordLower){
   return true;
   
 }
-
+// ---- categorise: remove legacy t.debit fallback
 function categorise(txns, rules) {
   for (const t of txns) {
     const descLower = String(t.desc || t.description || "").toLowerCase();
-    const amount = Math.abs(Number(t.amount || t.debit || 0));
-
-    // 1) normal rule match
+    const amount = Math.abs(Number(t.amount || 0));
     let matched = null;
     for (const r of rules) {
-      if (matchesKeyword(descLower, r.keyword)) {
-        matched = r.category;
-        break;
-      }
+      if (matchesKeyword(descLower, r.keyword)) { matched = r.category; break; }
     }
-
-    // 2) special case: tiny purchases at petrol stations → Coffee
-    //    (do it based on the *resulting category*, not the description text)
     if (matched && String(matched).toUpperCase() === "PETROL" && amount <= 2) {
       matched = "COFFEE";
     }
-
     t.category = matched || "UNCATEGORISED";
   }
 }
@@ -221,26 +234,18 @@ function renderCategoryTotals(txns) {
   });
 }
 
-
-
+// ---- month totals: debit-only label + sum
 function renderMonthTotals() {
-  // Use the same filtered set as the transactions table
   const txns = getFilteredTxns(monthFilteredTxns());
-  let debit = 0, credit = 0, count = 0;
-  for (const t of txns) {
-    const amt = Number(t.amount) || 0;
-    if (amt > 0) debit += amt; else credit += Math.abs(amt);
-    count++;
-  }
-  const net = debit - credit;
+  let debits = 0, count = 0;
+  for (const t of txns) { debits += Number(t.amount) || 0; count++; }
   const el = document.getElementById('monthTotals');
   if (el) {
-    const label = friendlyMonthOrAll(MONTH_FILTER);
-    const cat = CURRENT_FILTER ? ` + category \"${CURRENT_FILTER}\"` : "";
-    el.innerHTML = `Showing <span class="badge">${count}</span> transactions for <strong>${friendlyMonthOrAll(MONTH_FILTER)}${cat}</strong> · ` +
-                   `Debit: <strong>$${debit.toFixed(2)}</strong> · `;
+    const cat = CURRENT_FILTER ? ` + category "${CURRENT_FILTER}"` : "";
+    el.innerHTML = `Showing <span class="badge">${count}</span> transactions for <strong>${friendlyMonthOrAll(MONTH_FILTER)}${cat}</strong> · Debits: <strong>$${debits.toFixed(2)}</strong>`;
   }
 }
+
 
 function applyRulesAndRender({keepPage = false} = {}) { if (!keepPage) CURRENT_PAGE = 1;
   CURRENT_RULES = parseRules(document.getElementById('rulesBox').value);
@@ -604,12 +609,12 @@ function renderPager(totalPages) {
   }
 }
 
-
+// ---- storage helper (uses the defined key)
 function saveTxnsToLocalStorage(){
   try {
-    const data = JSON.stringify(CURRENT_TXNS||[]);
+    const data = JSON.stringify(CURRENT_TXNS || []);
     localStorage.setItem(LS_KEYS.TXNS_JSON, data);
-    // mirror-save to standard keys for Advanced mode
+    // mirror for Advanced mode
     localStorage.setItem('spendlite_txns_json_v7', data);
     localStorage.setItem('spendlite_txns_json', data);
   } catch {}
