@@ -353,7 +353,7 @@ function renderTransactionsTable(txns = monthFilteredTxns()) {
   const start = (CURRENT_PAGE - 1) * PAGE_SIZE;
   const pageItems = filtered.slice(start, start + PAGE_SIZE);
   const table = document.getElementById('transactionsTable');
-  let html = '<tr><th>Date</th><th>Amount</th><th>Category</th><th>Description</th><th></th></tr>';
+  let html = '<tr><th>Date</th><th>Debit</th><th>Category</th><th>Description</th><th></th></tr>';
   pageItems.forEach((t) => {
     const idx = CURRENT_TXNS.indexOf(t);
     const cat = (t.category || 'UNCATEGORISED').toUpperCase(); const displayCat = toTitleCase(cat);
