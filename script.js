@@ -257,26 +257,7 @@ function applyRulesAndRender({keepPage = false} = {}) { if (!keepPage) CURRENT_P
   renderTransactionsTable(txns);
   saveTxnsToLocalStorage();
   try { updateMonthBanner(); } catch {}
-}
-
-
-function computeDebitCredit(txns) {
-  let sumDebit = 0, sumCredit = 0;
-  for (const t of txns) {
-    if (t.amount > 0) sumDebit += t.amount;
-    else sumCredit += Math.abs(t.amount);
-  }
-  return {sumDebit, sumCredit, net: sumDebit - sumCredit};
-}
-
-function renderTotalsBar(txns) {
-  const {sumDebit, sumCredit, net} = computeDebitCredit(txns);
-  const el = document.getElementById('totalsBar');
-  if (!el) return;
-  const monthLabel = friendlyMonthOrAll(MONTH_FILTER);
-  el.innerHTML = `Rows: <strong>${txns.length}</strong> · Debit: <strong>$${sumDebit.toFixed(2)}</strong> · Credit: <strong>$${sumCredit.toFixed(2)}</strong> · Net: <strong>$${net.toFixed(2)}</strong> (${monthLabel})`;
-}
-
+                                                      }
 
 function exportTotalsold() {
   const txns = monthFilteredTxns();
