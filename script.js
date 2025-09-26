@@ -72,9 +72,9 @@ function loadCsvText(csvText) {
     const longDesc = String(r[COL.LONGDESC] ?? r[3] ?? r[r.length - 1] ?? '').trim();
 
     // require some content + a positive (debit-only) amount
-    if (!Number.isFinite(amountRaw) || amountRaw <= 0) continue;
-
-    txns.push({ date: effectiveDate, amount: amountRaw, description: longDesc });
+    - if (!Number.isFinite(amountRaw) || amountRaw <= 0) continue;
+    + if (!Number.isFinite(amountRaw) || amountRaw === 0) continue;
+          txns.push({ date: effectiveDate, amount: amountRaw, description: longDesc });
   }
 
   CURRENT_TXNS = txns;
