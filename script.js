@@ -51,34 +51,30 @@ function parseAmount(s) {
   return Number(s) || 0;
 }
 // ---- robust loader (works with <10-col CSVs and debit-only)
+
 function loadCsvText(csvText) {
   const rows = Papa.parse(csvText.trim(), { skipEmptyLines: true }).data;
 
-  // detect header by testing the DEBIT column of the first row
-  const startIdx = rows.length && isNaN(parseAmount(rows[0][COL.DEBIT])) ? 1 : 0;
-
-  const neededCols = [COL.DATE, COL.DEBIT, COL.LONGDESC];
-  const minCols = Math.max(...neededCols) + 1;
+  // header detection: if the first row's DEBIT isn't numeric, start at next row
+  const startIdx = rows.length && isNaN(parseAmount(rows[0]?.[COL.DEBIT])) ? 1 : 0;
 
   const txns = [];
   for (let i = startIdx; i < rows.length; i++) {
     const r = rows[i];
-    if (!r || r.length < minCols) {
-      // optional: help diagnose when columns are fewer than expected
-      // console.debug('Skipping row (too few cols):', r);
-      continue;
-    }
-    const effectiveDate = r[COL.DATE] || '';
-    const raw = parseAmount(r[COL.DEBIT]);       // debit column only
-    const longDesc = (r[COL.LONGDESC] || '').trim();
+    if (!r) continue;
 
-    // require some content + a numeric, non-zero amount
-    if (!Number.isFinite(raw) || raw === 0) continue;
+    // Allow short rows: fall back to earlier/last columns if our preferred index isn't there
+    const effectiveDate = (r[COL.DATE] ?? r[0] ?? '').trim();
+    const amountRaw =
+      parseAmount(r[COL.DEBIT] ?? r[1] ?? r.find(c => Number.isFinite(parseAmount(c)))) || 0;
 
-    // debit-only: treat positive as spend; ignore negatives (credits/refunds)
-    if (raw < 0) continue;
+    // Prefer LONGDESC, else try a sensible fallback (third col or last col)
+    const longDesc = String(r[COL.LONGDESC] ?? r[3] ?? r[r.length - 1] ?? '').trim();
 
-    txns.push({ date: effectiveDate, amount: raw, description: longDesc });
+    // require some content + a positive (debit-only) amount
+    if (!Number.isFinite(amountRaw) || amountRaw <= 0) continue;
+
+    txns.push({ date: effectiveDate, amount: amountRaw, description: longDesc });
   }
 
   CURRENT_TXNS = txns;
@@ -88,6 +84,7 @@ function loadCsvText(csvText) {
   applyRulesAndRender();
   return txns;
 }
+
 
 
 // --- Date helpers
