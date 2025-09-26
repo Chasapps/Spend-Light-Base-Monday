@@ -52,42 +52,43 @@ function parseAmount(s) {
 }
 // ---- robust loader (works with <10-col CSVs and debit-only)
 
+
 function loadCsvText(csvText) {
- 
+  try {
+    const rows = Papa.parse(csvText.trim(), { skipEmptyLines: true }).data;
+
+    // header detection
+    const startIdx = rows.length && isNaN(parseAmount(rows[0]?.[COL.DEBIT])) ? 1 : 0;
+
+    const txns = [];
+    for (let i = startIdx; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r) continue;
+
+      // fallbacks for short CSVs
+      const effectiveDate = (r[COL.DATE] ?? r[0] ?? '').trim();
+      const amountRaw =
+        parseAmount(r[COL.DEBIT] ?? r[1] ?? r.find(c => Number.isFinite(parseAmount(c)))) || 0;
+      const longDesc = String(r[COL.LONGDESC] ?? r[3] ?? r[r.length - 1] ?? '').trim();
+
+      // keep any non-zero amount (deb/cred both ok)
+      if (!Number.isFinite(amountRaw) || amountRaw === 0) continue;
+
+      txns.push({ date: effectiveDate, amount: amountRaw, description: longDesc });
+    }
+      alert("rows=" + rows.length + " txns=" + txns.length);
   
-  console.log('rows:', rows.length, 'txns:', txns.length, rows[0], rows[1]);
-  const rows = Papa.parse(csvText.trim(), { skipEmptyLines: true }).data;
 
-  // header detection: if the first row's DEBIT isn't numeric, start at next row
-  const startIdx = rows.length && isNaN(parseAmount(rows[0]?.[COL.DEBIT])) ? 1 : 0;
-
-  const txns = [];
-  for (let i = startIdx; i < rows.length; i++) {
-    const r = rows[i];
-    if (!r) continue;
-
-    // Allow short rows: fall back to earlier/last columns if our preferred index isn't there
-    const effectiveDate = (r[COL.DATE] ?? r[0] ?? '').trim();
-    const amountRaw =
-      parseAmount(r[COL.DEBIT] ?? r[1] ?? r.find(c => Number.isFinite(parseAmount(c)))) || 0;
-
-    // Prefer LONGDESC, else try a sensible fallback (third col or last col)
-    const longDesc = String(r[COL.LONGDESC] ?? r[3] ?? r[r.length - 1] ?? '').trim();
-
-    // require some content + a positive (debit-only) amount
-    - if (!Number.isFinite(amountRaw) || amountRaw <= 0) continue;
-    + if (!Number.isFinite(amountRaw) || amountRaw === 0) continue;
-          txns.push({ date: effectiveDate, amount: amountRaw, description: longDesc });
-  }
-
-  CURRENT_TXNS = txns;
-  saveTxnsToLocalStorage();
-  try { updateMonthBanner(); } catch {}
-  rebuildMonthDropdown();
-  applyRulesAndRender();
-  return txns;
-}
-
+    CURRENT_TXNS = txns;
+    saveTxnsToLocalStorage();
+    try { updateMonthBanner(); } catch {}
+    rebuildMonthDropdown();
+    applyRulesAndRender();
+    return txns;
+  } catch (err) {
+    alert('loadCsvText failed:', err);
+    alert('Could not read that CSV. Open console for details.');
+    
 
 
 // --- Date helpers
